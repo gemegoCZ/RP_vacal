@@ -14,8 +14,7 @@ obj.close()
 t_audio = n_samples/sample_freq
 
 print(t_audio)
-print(len(signal_wave))
-print(signal_wave[5:20])
+
 
 signal_array = np.frombuffer(signal_wave, dtype=np.int16)
 print(np.size(signal_array))
