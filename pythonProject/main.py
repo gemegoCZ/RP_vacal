@@ -1,7 +1,12 @@
 import wave
 import matplotlib.pyplot as plt
 import numpy as np
+from playsound import playsound
+from pydub import AudioSegment
 from scipy.io.wavfile import write
+
+# mp3_sound = AudioSegment.from_mp3("")
+# mp3_sound.export("", format="wav")
 
 obj = wave.open("alastor.wav", "rb")
 
@@ -36,5 +41,7 @@ plt.xlim(0, t_audio)
 plt.show()
 
 write("audio.wav", sample_freq, signal_array_2)
+
+playsound("newSong.wav")
 
 
