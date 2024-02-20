@@ -1,47 +1,54 @@
+from moviepy.editor import AudioFileClip
+from pydub import AudioSegment
+from playsound import playsound
+from scipy.io.wavfile import write
 import wave
 import matplotlib.pyplot as plt
 import numpy as np
-from playsound import playsound
-from pydub import AudioSegment
-from scipy.io.wavfile import write
+import os
 
-# mp3_sound = AudioSegment.from_mp3("")
-# mp3_sound.export("", format="wav")
+src = "alastor.mp3"
 
-obj = wave.open("alastor.wav", "rb")
+src_wav = AudioSegment.from_file(src)
+src_wav.export("between.wav", format="wav")
 
-sample_freq = obj.getframerate()
-n_samples = obj.getnframes()
-signal_wave = obj.readframes(-1)
+for i in range(3):
+    Audio = AudioFileClip("between.wav")
+    newAudio = Audio.subclip(i, i+1)
+    newAudio.write_audiofile("test" + str(i) + ".wav")
+    print(i)
 
-obj.close()
+    obj = wave.open("test" + str(i) + ".wav", "rb")
 
-t_audio = n_samples/sample_freq
+    sample_freq = obj.getframerate()
+    n_samples = obj.getnframes()
+    signal_wave = obj.readframes(-1)
 
-print(t_audio)
+    obj.close()
 
+    t_audio = n_samples / sample_freq
 
-signal_array = np.frombuffer(signal_wave, dtype=np.int16)
-print(np.size(signal_array))
-signal_2 = signal_wave[int(len(signal_wave)/2):]
-signal_array_2 = np.frombuffer(signal_2, dtype=np.int16)
+    print(t_audio)
 
-times = np.linspace(0, t_audio, num=len(signal_array))
+    signal_array = np.frombuffer(signal_wave, dtype=np.int16)
+    print(np.size(signal_array))
 
-print(sample_freq)
+    times = np.linspace(0, t_audio, num=len(signal_array))
 
-plt.figure(figsize=(15, 5))
-plt.plot(signal_array)
-plt.figure(figsize=(15, 5))
-plt.plot(times, signal_array)
-plt.title("Audio Signal")
-plt.ylabel("Signal wave")
-plt.xlabel("Time (s)")
-plt.xlim(0, t_audio)
-plt.show()
+    print(sample_freq)
 
-write("audio.wav", sample_freq, signal_array_2)
+    plt.figure(figsize=(15, 5))
+    plt.plot(times, signal_array)
+    plt.title("Audio Signal")
+    plt.ylabel("Signal wave")
+    plt.xlabel("Time (s)")
+    plt.xlim(0, t_audio)
+    plt.show()
 
-playsound("newSong.wav")
+    os.remove("test" + str(i) + ".wav")
+
+# playsound("between.wav")
+print("konec")
+
 
 
