@@ -1,3 +1,5 @@
+import time
+
 from moviepy.editor import AudioFileClip
 from pydub import AudioSegment
 from playsound import playsound
@@ -46,6 +48,11 @@ for i in range(3):
     plt.show()
 
     os.remove("test" + str(i) + ".wav")
+
+Audio = None
+newAudio = None
+time.sleep(4)
+os.remove("between.wav")
 
 # playsound("between.wav")
 print("konec")
