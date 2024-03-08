@@ -1,71 +1,80 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import pyaudio as pa
+import struct
+import matplotlib.pyplot as plt
+from scipy.fft import rfft
+from colorama import Fore
+
+FORMAT = pa.paInt16
+CHANNELS = 1
+RATE = 44100 # in Hz
+CHUNK = 1024
+
+p = pa.PyAudio()
+
+stream = p.open(
+    format = FORMAT,
+    channels = CHANNELS,
+    rate = RATE,
+    input=True,
+    output=True,
+    frames_per_buffer=CHUNK
+)
+
+fig, [ax1,ax2] = plt.subplots(nrows=2, ncols=1)
+x = np.arange(0,CHUNK,1)
+line, = ax1.plot(x, np.zeros(CHUNK),'r')
+ax1.set_ylim(-6000,6000)
+ax1.ser_xlim = (0,CHUNK)
+fig.show()
+first_integer = []
+# print(f"\033[38;2;0;100;12mHello!\033[0m")
 
 
-def wave2rgb(wave):
-    # This is a port of javascript code from  http://stackoverflow.com/a/14917481
-    gamma = 0.8
-    intensity_max = 1
+def change_color_text (text,r,g,b):
+    textcolor = f"\033[38;2;{r};{g};{b}m{text}\033[0m"
+    return textcolor
 
-    if wave < 380:
-        red, green, blue = 0, 0, 0
-    elif wave < 440:
-        red = -(wave - 440) / (440 - 380)
-        green, blue = 0, 1
-    elif wave < 490:
-        red = 0
-        green = (wave - 440) / (490 - 440)
-        blue = 1
-    elif wave < 510:
-        red, green = 0, 1
-        blue = -(wave - 510) / (510 - 490)
-    elif wave < 580:
-        red = (wave - 510) / (580 - 510)
-        green, blue = 1, 0
-    elif wave < 645:
-        red = 1
-        green = -(wave - 645) / (645 - 580)
-        blue = 0
-    elif wave <= 780:
-        red, green, blue = 1, 0, 0
-    else:
-        red, green, blue = 0, 0, 0
+while True:
+    data = stream.read(CHUNK)
+    dataInt = struct.unpack(str(CHUNK) + 'h', data)
+    line.set_ydata(dataInt)
 
-    # let the intensity fall of near the vision limits
-    if wave < 380:
-        factor = 0
-    elif wave < 420:
-        factor = 0.3 + 0.7 * (wave - 380) / (420 - 380)
-    elif wave < 700:
-        factor = 1
-    elif wave <= 780:
-        factor = 0.3 + 0.7 * (780 - wave) / (780 - 700)
-    else:
-        factor = 0
+    k = rfft(dataInt)
 
-    def f(c):
-        if c == 0:
-            return 0
-        else:
-            return intensity_max * pow(c * factor, gamma)
+    # print(k)
+    ax2.clear()
+    ax2.plot(np.abs(k))
+    ax2.set_ylim(-60000,60000)
+    ax2.ser_xlim = (0,CHUNK)
+    # plt.show()
 
-    return f(red), f(green), f(blue)
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+    # print(dataInt)
 
+    first_integer = list(dataInt[:8])
+    first_integer.append(255)
+    # print("first_integer" + str(first_integer))
 
-N = 100
-image = np.zeros((5, N, 3))
+    def convert_to_rgb(first_integer):
+        # Normalize the integer data to the range [0, 255]
+        normalized_data = np.interp(first_integer, (min(first_integer), max(first_integer)), (0, 255))
 
-for i in range(0, 5):
-    for j in range(0, N):
-        start = 380
-        end = 780
-        wave = j * (end - start) / N + start
-        image[i][j] = wave2rgb(wave)
+        # Convert the normalized data to uint8 type (0-255)
+        rgb_data = np.uint8(normalized_data)
 
-print(image)
+        # For grayscale, RGB values will be the same for all channels
+        return np.stack(rgb_data)
 
-ax = plt.axes()
-ax.get_yaxis().set_visible(False)
-plt.imshow(image)
-plt.show()
+    rgb_data = convert_to_rgb(first_integer)
+    # print("rgb_date" + str(rgb_data))
+    text = str(chr(9608))
+    # print(len(rgb_data))
+
+    if len(rgb_data)>=3:
+        r = rgb_data[3]
+        g = rgb_data[4]
+        b = rgb_data[5]
+        # print(change_color_text(text,r,g,b), end="")
 

@@ -6,7 +6,7 @@ from colorama import Fore
 
 FORMAT = pa.paInt16
 CHANNELS = 1
-RATE = 44100 # in Hz
+SAMPLE_RATE = 44100 # in Hz
 CHUNK = 1024 * 2
 
 p = pa.PyAudio()
@@ -14,7 +14,7 @@ p = pa.PyAudio()
 stream = p.open(
     format = FORMAT,
     channels = CHANNELS,
-    rate = RATE,
+    rate = SAMPLE_RATE,
     input=True,
     output=True,
     frames_per_buffer=CHUNK
@@ -36,7 +36,9 @@ def change_color_text (text,r,g,b):
 while True:
     data = stream.read(CHUNK)
     dataInt = struct.unpack(str(CHUNK) + 'h', data)
-    line.set_ydata(dataInt)
+    line.set_ydata(dataInt) #len(dataInt) = CHUNK
+    print(len(dataInt))
+
     fig.canvas.draw()
     fig.canvas.flush_events()
     # print(dataInt)
