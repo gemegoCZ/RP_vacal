@@ -3,7 +3,6 @@ import pyaudio as pa
 import struct
 import matplotlib.pyplot as plt
 from scipy.fft import rfft
-from colorama import Fore
 
 FORMAT = pa.paInt16
 CHANNELS = 1
@@ -25,9 +24,10 @@ fig, [ax1,ax2] = plt.subplots(nrows=2, ncols=1)
 x = np.arange(0,CHUNK,1)
 line, = ax1.plot(x, np.zeros(CHUNK),'r')
 ax1.set_ylim(-6000,6000)
-ax1.ser_xlim = (0,CHUNK)
+ax1.set_xlim(0,CHUNK)
 fig.show()
 first_integer = []
+color_choose = []
 # print(f"\033[38;2;0;100;12mHello!\033[0m")
 
 
@@ -40,22 +40,28 @@ while True:
     dataInt = struct.unpack(str(CHUNK) + 'h', data)
     line.set_ydata(dataInt)
 
-    k = rfft(dataInt)
-
-    # print(k)
-    ax2.clear()
-    ax2.plot(np.abs(k))
-    ax2.set_ylim(-60000,60000)
-    ax2.ser_xlim = (0,CHUNK)
-    # plt.show()
-
     fig.canvas.draw()
     fig.canvas.flush_events()
-    # print(dataInt)
+
+    real_time_rfft = rfft(dataInt)
+    ax2.clear()
+    ax2.plot(np.abs(real_time_rfft))
+    ax2.set_ylim(0,100000)
+    ax2.set_xlim(0,(CHUNK/2))
+
+    color_choose.clear()
+    for i in range(25):
+        color_choose.append(i*max((real_time_rfft[(i*10):((i+1)*10)])))
+    # print(color_choose)
+    np.argmax(color_choose)
+    print(color_choose)
+    print(np.argmax(color_choose))
+
+
+
 
     first_integer = list(dataInt[:8])
     first_integer.append(255)
-    # print("first_integer" + str(first_integer))
 
     def convert_to_rgb(first_integer):
         # Normalize the integer data to the range [0, 255]
