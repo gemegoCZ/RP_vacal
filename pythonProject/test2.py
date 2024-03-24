@@ -2,6 +2,7 @@ import numpy as np
 import pyaudio as pa
 import struct
 import matplotlib.pyplot as plt
+from colorsys import hls_to_rgb
 from colorama import Fore
 
 FORMAT = pa.paInt16
@@ -45,6 +46,11 @@ while True:
     first_integer = list(dataInt[:8])
     first_integer.append(255)
     # print("first_integer" + str(first_integer))
+
+
+
+
+
 
     def convert_to_rgb(first_integer):
         # Normalize the integer data to the range [0, 255]
