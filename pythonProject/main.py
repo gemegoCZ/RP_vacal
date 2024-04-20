@@ -1,61 +1,79 @@
-import time
-
-from moviepy.editor import AudioFileClip
-from pydub import AudioSegment
-from playsound import playsound
-from scipy.io.wavfile import write
-import wave
-import matplotlib.pyplot as plt
 import numpy as np
-import os
+import pyaudio as pa
+import struct
+import matplotlib.pyplot as plt
+from scipy.fft import rfft
+from colorsys import hls_to_rgb
 
-src = "alastor.mp3"
+FORMAT = pa.paInt16
+CHANNELS = 1
+RATE = 44100 # in Hz
+CHUNK = 1024
 
-src_wav = AudioSegment.from_file(src)
-src_wav.export("between.wav", format="wav")
+p = pa.PyAudio()
 
-for i in range(3):
-    Audio = AudioFileClip("between.wav")
-    newAudio = Audio.subclip(i, i+1)
-    newAudio.write_audiofile("test" + str(i) + ".wav")
-    print(i)
+stream = p.open(
+    format = FORMAT,
+    channels = CHANNELS,
+    rate = RATE,
+    input=True,
+    output=True,
+    frames_per_buffer=CHUNK
+)
 
-    obj = wave.open("test" + str(i) + ".wav", "rb")
+fig, [ax1,ax2] = plt.subplots(nrows=2, ncols=1)
+x = np.arange(0,CHUNK,1)
+line, = ax1.plot(x, np.zeros(CHUNK),'r')
+ax1.set_ylim(-6000,6000)
+ax1.set_xlim(0,CHUNK)
+fig.show()
+first_integer = []
+color_choose = []
+color_argmax_2 = 0
+color_argmax_3 = 0
+color_argmax_4 = 0
+# print(f"\033[38;2;0;100;12mHello!\033[0m")
 
-    sample_freq = obj.getframerate()
-    n_samples = obj.getnframes()
-    signal_wave = obj.readframes(-1)
+while True:
+    data = stream.read(CHUNK)
+    dataInt = struct.unpack(str(CHUNK) + 'h', data)
+    line.set_ydata(dataInt)
 
-    obj.close()
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 
-    t_audio = n_samples / sample_freq
+    real_time_rfft = rfft(dataInt)
+    ax2.clear()
+    ax2.plot(np.abs(real_time_rfft))
+    ax2.set_ylim(0,100000)
+    ax2.set_xlim(0,(CHUNK/2))
 
-    print(t_audio)
+    color_choose.clear()
+    for i in range(23):
+        color_choose.append((-(2/(i+3))+1)*max((real_time_rfft[(i*3):((i+1)*7)])))
+    color_argmax = np.argmax(color_choose)
 
-    signal_array = np.frombuffer(signal_wave, dtype=np.int16)
-    print(np.size(signal_array))
+    color_argmax_1 = int(np.interp(color_argmax, (3, 23), (0, 360)))
 
-    times = np.linspace(0, t_audio, num=len(signal_array))
+    color_argmax = (color_argmax_1 + color_argmax_2 + color_argmax_3 + color_argmax_4)/4
+    color_argmax_4 = color_argmax_3
+    color_argmax_3 = color_argmax_2
+    color_argmax_2 = color_argmax_1
 
-    print(sample_freq)
+    rgb_list = hls_to_rgb(((color_argmax-25)/360),.5,.8)
+    rgb_list = list(rgb_list)
 
-    plt.figure(figsize=(15, 5))
-    plt.plot(times, signal_array)
-    plt.title("Audio Signal")
-    plt.ylabel("Signal wave")
-    plt.xlabel("Time (s)")
-    plt.xlim(0, t_audio)
-    plt.show()
-
-    os.remove("test" + str(i) + ".wav")
-
-Audio = None
-newAudio = None
-time.sleep(4)
-os.remove("between.wav")
-
-# playsound("between.wav")
-print("konec")
+    for i in range(3):
+        rgb_list[i] = int(np.interp(rgb_list[i], (0, 1), (0, 255)))
+    # print(rgb_list)
 
 
+
+    def change_color_text(text, r, g, b):
+        textcolor = f"\033[38;2;{r};{g};{b}m{text}\033[0m"
+        return textcolor
+
+    text = str(chr(9608))
+
+    print(change_color_text(text,rgb_list[0],rgb_list[1],rgb_list[2]), end="")
 
