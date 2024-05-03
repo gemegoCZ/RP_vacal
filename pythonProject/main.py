@@ -35,7 +35,6 @@ color_argmax_2 = 0
 color_argmax_3 = 0
 color_argmax_4 = 0
 pixels = neopixel.NeoPixel(board.D18,144,brightness = 0)
-pixels[0] = []
 # print(f"\033[38;2;0;100;12mHello!\033[0m")
 
 while True:
@@ -53,11 +52,11 @@ while True:
     ax2.set_xlim(0,(CHUNK/2))
 
     x = max(real_time_rfft)
-    pixels.brightness = int(np.interp(x,(0,100000),(0,0.2)))
+    pixels.brightness = int(np.interp(x,(0,100000),(0,1)))
 
     color_choose.clear()
     for i in range(23):
-        color_choose.append((-(1.9/(i+3))+1)*max((real_time_rfft[(i*3):((i+1)*7)])))
+        color_choose.append((-(1.9/(i+3))+1)*max(real_time_rfft[(i*3):((i+1)*7)]))
     color_argmax = np.argmax(color_choose)
 
     color_argmax_1 = int(np.interp(color_argmax, (3, 23), (0, 360)))
@@ -70,15 +69,22 @@ while True:
     rgb_list = hls_to_rgb(((color_argmax-27)/360),.5,.8)
     rgb_list = list(rgb_list)
 
+    # 8x18
     for i in range(3):
         rgb_list[i] = int(np.interp(rgb_list[i], (0, 1), (0, 255)))
     # print(rgb_list)
 
-    pixels[0] = rgb_list
-
-    for i in range(len(pixels),0):
-        pixels[i+1] = pixels[i]
-
+    for i in range(9):
+        for j in range(8):
+            if (max(real_time_rfft[(i*20):(i*20+10)]) > ((8-j)*10000)):
+                pixels[j + 16 * i] = rgb_list
+            else:
+                pixels[j + 16 * i] = []
+        for k in range(15, 7, -1):
+            if (max(real_time_rfft[(i*20+10):(i*20+20)]) > ((k-7)*10000)):
+                pixels[k + 16 * i] = rgb_list
+            else:
+                pixels[k + 16 * i] = []
 
 
     # def change_color_text(text, r, g, b):
